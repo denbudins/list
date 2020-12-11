@@ -1,33 +1,24 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const util = require('util');
 
-fs.readdir(process.cwd(), (err, filenames) => {
+const { lstat } = fs.promises;
+
+fs.readdir(process.cwd(), async (err, filenames) => {
     if (err) {
         console.log(err);
     }
 
-    const allStats = Array(filenames.length).fill(null);
+    const statPromises = filenames.map(filename => {
+        return lstat(filename);
+    });
 
-    for (let filename of filenames){
-        const index = filenames.indexOf(filename);
+    const allStats = await Promise.all(statPromises);
 
-        fs.lstat(filename, (err, stats) => {
-            if (err) {
-                console.log(err);
-            }
+    for (let stats of allStats){
+        const index = allStats.indexOf(stats);
 
-            allStats[index] = stats;
-
-            const reday = allStats.every(stats => {
-                return stats;
-            });
-
-            if(reday){
-                allStats.forEach((stats, index) => {
-                    console.log(filenames[index], stats.isFile());
-                });
-            }
-        });
+        console.log(filenames[index], stats.isFile());
     }
 });
